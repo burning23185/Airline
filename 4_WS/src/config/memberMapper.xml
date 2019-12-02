@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="memberMapper">
+		
+	<select id="login" parameterType="com.ws.vo.MemberVO" resultType="String">
+		select nickname from ws_members where email = #{email} and pw = #{pw}
+	</select>
+
+	<select id="isEmail" parameterType="String" resultType="Integer">
+		select count(email) from ws_members where email= #{email}
+	</select>
+	
+	<select id="isNickname" parameterType="String" resultType="Integer">
+		select count(nickname) from ws_members where nickname = #{nickname}
+	</select>
+	
+	<select id="selectMember" parameterType="com.ws.vo.MemberVO" resultType="com.ws.vo.MemberVO">
+		select nickname, name, in_date from ws_members where email = #{email} and pw= #{pw}
+	</select>
+	
+	<insert id="addMember" parameterType="com.ws.vo.MemberVO">
+		insert into ws_members (email, pw, nickname, name, in_date) values (#{email},#{pw},#{nickname},#{name},sysdate)
+	</insert>
+
+</mapper>

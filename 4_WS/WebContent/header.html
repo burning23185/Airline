@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width= device-width" initial-scale="1">
+ <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="js/bootstrap.js"></script>
+<link rel="stylesheet" href="css/bootstrap.css">
+<script type="text/javascript" src="js/base.js"></script>
+<script type="text/javascript" src="js/rsa.js"></script>
+<script type="text/javascript" src="js/jsbn.js"></script>
+<script type="text/javascript" src="js/prng4.js"></script>
+<script type="text/javascript" src="js/rng.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark" >
+  <a class="navbar-brand" href="frontController?cmd=loadPage&url=main" id="logo">J.W. AirLine</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNav">
+    <ul class="navbar-nav" style="background-color:#343a40;">
+      <li class="nav-item">
+        <a class="nav-link" href="frontController?cmd=loadPage&url=event">특가행사</a>
+      </li>
+        <li class="nav-item">
+        <a class="nav-link" href="frontController?cmd=loadPage&url=introduce">항공권 예매</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="frontController?cmd=loadPage&url=board">항공후기</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="frontController?cmd=loadPage&url=news">News</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">고객센터</a>
+           </li>
+           </ul>
+           <div class="collapse navbar-collapse justify-content-end" id="navbarNav" style="background-color:#343a40;">
+           <div id="login-bar">
+          <ul class="navbar-nav" style="margin-right: 75px;">
+          <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Login
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <input class="mr-sm-2" style="margin: 5px;" type="text" placeholder="Email" id="email">
+            <input class="mr-sm-2" style="margin: 5px;" type="password" placeholder="Password" id="pw">
+            <br>
+            <input class="mr-sm-2" style="margin: 5px;" type="checkbox" id="saveId">email 저장
+    		    <div class="dropdown-divider"></div>
+    		<a class="btn btn-outline-success my-2 my-sm-0 btn-block" onclick="login()">Login</a>
+        </div>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="frontController?cmd=loadPost&url=signup">SignUp</a>
+        </li>
+        </ul>
+        </div>
+    </div>
+    </div>
+   </nav>
+</body>
+
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+	integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+	crossorigin="anonymous"></script>
+<script type="text/javascript">	
+if(sessionStorage.getItem("nickname") != null){
+	var html= "<ul class='navbar-nav' style='margin-right: 75px;'><li class='nav-item'><a class='nav-link' href='frontController?cmd=loadPage&url=myPage' role='button'>Mypage </a></li><li class='nav-item'><a class='nav-link' href='#' onclick='logout()' role='button'>로그아웃</a></li></ul>";
+	$("#login-bar").html(html);
+}
+
+if(localStorage.getItem("saveId") != null ){
+	$("input#email").val(localStorage.getItem("saveId"));
+	$("input#saveId").attr("checked", true);
+}
+
+var RSAM="";
+var RSAE="";
+
+	$("#navbarDropdown").on("click",function(){
+	$.getJSON("frontController?cmd=loginAction", function(data){
+	RSAM = data.RSAModulus ;
+	RSAE = data.RSAExponent;
+	});
+	});
+	
+	var login = function(){
+		if($("#email").val() == "" || $("#pw").val() == "" ){
+			alert("아이디와 비밀번호를 입력하시오");}else{
+				sessionStorage.setItem("email",$("#email").val());
+		        var rsa = new RSAKey();
+		        rsa.setPublic(RSAM,RSAE);
+
+				if($("input#saveId").is(":checked") == true){
+					localStorage.setItem("saveId",$("#email").val());
+				}else{
+					localStorage.removeItem("saveId");
+				
+				}
+				$.ajax({
+					type:"post",
+					url : "frontController?cmd=loginAction",
+					cache : false,
+					data : {
+						email : rsa.encrypt(base64Encode($("#email").val())),
+						pw : rsa.encrypt(base64Encode($("#pw").val()))
+					},
+					dataType : "json",
+					 fail: function(error) {
+						 alert("비밀번호가 잘못 되었습니다!!");
+							$("input#pw").val("");
+						  },
+					success : function(data) {
+						if (data.nickname != null) {
+							sessionStorage.setItem("nickname",data.nickname);
+							location.reload();
+						}else{
+							alert("비밀번호가 잘못 되었습니다!!");
+							$("input#pw").val("");
+						}
+					}
+				});
+			}
+	}
+	
+	var logout =  function() {
+		sessionStorage.removeItem("nickname");
+		location.reload();
+	}
+	</script>
+</html>

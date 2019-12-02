@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="postMapper">
+
+	<insert id="addPost" parameterType="com.ws.vo.CommentVO">
+		insert into ws_post(post_id, ticket, title, nickname, file_name, content, post_date, email) 
+		 values (ws_post_seq.nextval, #{ticketNumber}, #{title}, #{nickname}, #{fileName}, #{content}, sysdate, #{email})
+	</insert>
+	
+	<select id="selectPostList" parameterType="hashmap" resultType="com.ws.vo.PostVO">
+		select * from (select  post_id as postId, title, nickname, to_char(post_date,'yyyy.mm.dd') as postDate, NVL(click, 0) as click, row_number() over(order by post_id desc) rank
+		from ws_post)where rank between #{startNo} and #{endNo}
+	</select>
+		
+	<select id="searchTitle" parameterType="hashmap" resultType="com.ws.vo.PostVO">
+		select * from (select  post_id as postId, title, nickname, to_char(post_date,'yyyy.mm.dd') as postDate, click, row_number() over(order by post_id desc) rank
+		from ws_post where title like '%'|| #{searchText} || '%'or content like '%'|| #{searchText} || '%') where rank between #{startNo} and #{endNo}
+	</select>
+	
+	<select id="searchNickname" parameterType="hashmap" resultType="com.ws.vo.PostVO">
+		select * from (select  post_id as postId, title, nickname, to_char(post_date,'yyyy.mm.dd') as postDate, click, row_number() over(order by post_id desc) rank
+		from ws_post where nickname like '%'|| #{searchText} || '%') where rank between #{startNo} and #{endNo}
+	</select>
+	
+	<select id="selectPost" parameterType="String" resultType="com.ws.vo.PostVO">
+		select title,nickname,file_name as fileName,content,to_char(post_date,'yyyy.mm.dd') as postDate, NVL(good, 0) as good from ws_post where post_id = #{postId}
+	</select>
+
+	<update id="updatePost" parameterType="com.ws.vo.PostVO">
+		update ws_post set file_name=#{fileName}, content=#{content} where post_id=#{postId}
+	</update>
+	
+	<update id="updatePostNoFile" parameterType="com.ws.vo.PostVO">
+		update ws_post set content=#{content} where post_id=#{postId}
+	</update>
+	
+	<select id="selectMaxNum" resultType="Integer">
+		select Count(post_id) from ws_post
+	</select>
+	
+	<select id="selectMaxText" parameterType= "String" resultType="Integer">
+		select count(post_id) from ws_post where title like '%'|| #{searchText} || '%'or content like '%'|| #{searchText} || '%'
+	</select>
+	
+	<select id="selectMaxNumNick" parameterType= "String" resultType="Integer">
+		select count(post_id) from ws_post where nickname like '%'|| #{searchText} || '%'
+	</select>
+	
+	<select id="isTickNum" parameterType= "String" resultType="Integer">
+		SELECT COUNT(ticket) from ws_post where ticket= #{number}
+	</select>
+
+	<update id="deletePost" parameterType="com.ws.vo.PostVO">
+		update ws_post set content= '' where post_id=#{postId}
+	</update>
+	
+	<insert id="addClick" parameterType="hashmap">
+		insert into ws_check(post_id, nickname, post_click, good_click, no_good_click) values (#{postId}, #{nickname},1,0,0)
+	</insert>
+	
+	<update id="updateClick" parameterType="Integer" >
+		update ws_post set click = NVL(click, 0) + 1 where post_id= #{postId}
+	</update>
+
+	<update id="updateGoodUp" parameterType="Integer" >
+		update ws_post set good = NVL(good, 0) + 1 where post_id=#{postId}
+	</update>
+
+	<update id="updateGoodDown" parameterType="Integer" >
+		update ws_post set good = NVL(good, 0) - 1 where post_id=#{postId}
+	</update>	
+
+	<update id="updateGoodClick" parameterType= "hashmap" >
+		update ws_check set good_click = 1 where post_id=#{postId} and nickname = #{nickname}
+	</update>
+	
+	<update id="updateNoGoodClick" parameterType= "hashmap" >
+		update ws_check set no_good_click = 1 where post_id=#{postId} and nickname = #{nickname}
+	</update>
+	
+	<select id="selectGood" parameterType= "Integer" resultType="Integer">
+		select NVL(good, 0) from ws_post where post_id=#{postId}
+	</select>
+	
+	<select id="isClick" parameterType= "hashmap" resultType="Integer">
+		select count(post_click) from ws_check where post_id= #{postId} and nickname = #{nickname}
+	</select>
+	
+	<select id="isGood" parameterType= "hashmap" resultType="Integer">
+		select NVL(good_click, 0)  from ws_check where post_id= #{postId} and nickname = #{nickname}
+	</select>
+	
+	<select id="isNoGood" parameterType= "hashmap" resultType="Integer">
+		select NVL(no_good_click, 0) from ws_check where post_id= #{postId} and nickname = #{nickname}
+	</select>
+	
+	<select id="selectGoodPost" parameterType="hashmap" resultType="com.ws.vo.PostVO">
+		select title, post_id as postId from(select title, post_id, row_number() over(order by good desc) rank from ws_post) where rank between #{startNo} and #{endNo}
+	</select>
+	
+	<select id="selectClickPost" parameterType="hashmap" resultType="com.ws.vo.PostVO">
+		select title, post_id as postId from(select title, post_id, row_number() over(order by click desc) rank from ws_post) where rank between #{startNo} and #{endNo}
+	</select>
+
+</mapper>
